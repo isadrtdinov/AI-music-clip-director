@@ -26,9 +26,13 @@ def get_lyrics_from_genius(query):
                 break
             index = text.find('[', last_index)
             if index == -1:
-                break
+                index = len(text)
             lyrics += text[last_index + 1:index]
             last_index = text.find(']', index)
+        if lyrics[-5:] == 'Embed':
+            lyrics = lyrics[:-5]
+        while lyrics[-1].isdigit() or lyrics[-2].isdigit():
+            lyrics = lyrics[:-1]
         return lyrics
     else:
         raise Exception("LyricsNotFoundException")
