@@ -130,3 +130,6 @@ dmypy.json
 
 token_genius.token
 yandex_music_token.token
+song.mp3
+ans.txt
+transcription.pickle
