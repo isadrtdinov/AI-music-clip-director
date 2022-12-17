@@ -1,9 +1,6 @@
 import subprocess
 import sys
 
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-
-subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/openai/whisper.git"])
 
 from get_song import get_lyrics
 from get_lyrics_with_time_segments import get_lyrics_with_time_segments
@@ -29,7 +26,6 @@ from tqdm.notebook import tqdm
 
 song_file = "song.mp3"
 lyrics_file = "ans.txt"
-language = "English"
 query = "Never"
 transcription_pickle_file = "transcription.pickle"
 
@@ -40,13 +36,14 @@ print(
     f"and has {sum(np.prod(p.shape) for p in model.parameters()):,} parameters."
 )
 
-options = dict(language=language, beam_size=10, best_of=10)
-transcribe_options = dict(task="transcribe", **options)
 
-lyrics = get_lyrics(query, song_file)
+lyrics, language = get_lyrics(query, song_file)
 
 with open(lyrics_file, 'w') as file:
     file.write(lyrics)
+
+options = dict(language=language, beam_size=10, best_of=10)
+transcribe_options = dict(task="transcribe", **options)
 
 transcription = model.transcribe(song_file, **transcribe_options)
 

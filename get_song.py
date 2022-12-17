@@ -41,15 +41,27 @@ def get_lyrics_from_genius(query):
 def get_lyrics(query, song_file):
     search_result = client.search(query)
     track = search_result.best['result']
+    lyrics = ""
     if type(track) == Track:
         track.download(song_file)
+
         if track.lyrics_available:
             supp = track.get_supplement()
             lyrics = supp['lyrics']['full_lyrics']
-            return lyrics
         else:
-            return get_lyrics_from_genius(query)
+            lyrics = get_lyrics_from_genius(query)
     else:
         raise Exception("TrackNotFoundException")
+    cnteng = 0
+    cntru = 0
+    for i in lyrics:
+        if ord(i.lower()) >= ord("a") and ord(i.lower()) <= ord("z"):
+            cnteng += 1
+        elif ord(i.lower()) >= ord("а") and ord(i.lower()) <= ord("я"):
+            cntru += 1
+    if cnteng > cntru:
+        return lyrics, "English"
+    else:
+        return lyrics, "Russian"
 
 
