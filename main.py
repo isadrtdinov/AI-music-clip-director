@@ -1,18 +1,63 @@
+import subprocess
+import sys
+
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+
+subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/openai/whisper.git"])
+
 from get_song import get_lyrics
 from get_lyrics_with_time_segments import get_lyrics_with_time_segments
 
+import io
+import os
+import numpy as np
 
-query = "Кукла колдуна"
+try:
+    import tensorflow  # required in Colab to avoid protobuf compatibility issues
+except ImportError:
+    pass
+
+import torch
+import pandas as pd
+import urllib
+import tarfile
+import whisper
+import torchaudio
+
+from scipy.io import wavfile
+from tqdm.notebook import tqdm
+
 song_file = "song.mp3"
-lyrics = get_lyrics(query, song_file)
 lyrics_file = "ans.txt"
-
+language = "English"
+query = "Never"
 transcription_pickle_file = "transcription.pickle"
+
+
+model = whisper.load_model("medium")
+print(
+    f"Model is {'multilingual' if model.is_multilingual else 'English-only'} "
+    f"and has {sum(np.prod(p.shape) for p in model.parameters()):,} parameters."
+)
+
+options = dict(language=language, beam_size=10, best_of=10)
+transcribe_options = dict(task="transcribe", **options)
+
+lyrics = get_lyrics(query, song_file)
+
 with open(lyrics_file, 'w') as file:
     file.write(lyrics)
+
+transcription = model.transcribe(song_file, **transcribe_options)
+
+
+
+pd.options.display.max_rows = 100
+pd.options.display.max_colwidth = 1000
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 
 ans = get_lyrics_with_time_segments(lyrics_file, transcription_pickle_file)
 for i in range(len(ans)):
     print(ans[i]["text"], ans[i]["start"], ans[i]["end"])
-
