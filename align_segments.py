@@ -7,7 +7,7 @@ def align_segments(transcription: dict, lyrics: str):
 
     segments = []
     times = []
-    for segment in dict['segments']:
+    for segment in transcription['segments']:
         segments.append(segment['text'].lower().strip())
         segments[-1] = segments[-1].replace('(', '')
         segments[-1] = segments[-1].replace(')', '')
