@@ -3,7 +3,7 @@ import sys
 
 
 from get_song import get_lyrics
-from get_lyrics_with_time_segments import get_lyrics_with_time_segments
+from align_segments import align_segments
 
 import io
 import os
@@ -55,6 +55,6 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 
-ans = get_lyrics_with_time_segments(lyrics_file, transcription_pickle_file)
+ans = align_segments(lyrics_file, transcription_pickle_file)
 for i in range(len(ans)):
     print(ans[i]["text"], ans[i]["start"], ans[i]["end"])
