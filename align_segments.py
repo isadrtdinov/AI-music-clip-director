@@ -3,7 +3,7 @@ import pickle
 from fuzzywuzzy import fuzz
 
 
-def get_lyrics_with_time_segments(lyrics_file, transcription_pickle_file):
+def align_segments(transcription: , lyrics: str):
     objects = []
     with (open(transcription_pickle_file, "rb")) as openfile:
         while True:
