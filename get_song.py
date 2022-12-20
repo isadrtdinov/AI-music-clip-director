@@ -5,17 +5,10 @@ from yandex_music.track.track import Track
 from lyricsgenius import Genius
 
 
-with open('yandex_music_token.token', 'r') as f:
-    token = f.read()
 
-client = Client(token).init()
+def get_lyrics_from_genius(query, genius_token):
+    genius = Genius(genius_token)
 
-with open('token_genius.token', 'r') as f:
-    token = f.read()
-genius = Genius(token)
-
-
-def get_lyrics_from_genius(query):
     song = genius.search_song(query)
     if song:
         text = song.lyrics
@@ -38,10 +31,11 @@ def get_lyrics_from_genius(query):
         raise Exception("LyricsNotFoundException")
 
 
-def get_lyrics(query, song_file):
+def get_lyrics(query, song_file, ya_music_token, genius_token):
+    client = Client(ya_music_token).init()
     search_result = client.search(query)
+
     track = search_result.best['result']
-    lyrics = ""
     if type(track) == Track:
         track.download(song_file)
 
@@ -49,7 +43,7 @@ def get_lyrics(query, song_file):
             supp = track.get_supplement()
             lyrics = supp['lyrics']['full_lyrics']
         else:
-            lyrics = get_lyrics_from_genius(query)
+            lyrics = get_lyrics_from_genius(query, genius_token)
     else:
         raise Exception("TrackNotFoundException")
     cnteng = 0

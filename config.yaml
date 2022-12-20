@@ -1,0 +1,6 @@
+---
+out_sample_rate: 16000
+song_file: song.mp3
+vocals_file: vocal.mp3
+whisper_size: medium
+...

@@ -1,9 +1,16 @@
-import subprocess
-import sys
+import argparse
 
+parser = argparse.ArgumentParser(description="AI-music-clip-director")
+parser.add_argument("--query", dest="query", required=True)
+parser.add_argument("--style", dest="style", required=True)
+parser.add_argument("--config", dest="config", required=True)
+parser.add_argument("--ya_music_token", dest="ya_music_token", required=True)
+parser.add_argument("--genius_token", dest="genius_token", required=True)
 
-from get_song import get_lyrics
-from align_segments import align_segments
+args = parser.parse_args()
+
+from composer import ClipDirector
+from separate_vocals import separate_vocals
 
 import io
 import os
@@ -23,38 +30,29 @@ import torchaudio
 
 from scipy.io import wavfile
 from tqdm.notebook import tqdm
-
-song_file = "song.mp3"
-lyrics_file = "ans.txt"
-query = "Never"
-transcription_pickle_file = "transcription.pickle"
+import yaml
 
 
-model = whisper.load_model("medium")
-print(
-    f"Model is {'multilingual' if model.is_multilingual else 'English-only'} "
-    f"and has {sum(np.prod(p.shape) for p in model.parameters()):,} parameters."
-)
+def load_config():
+    stream = open("config.yaml", 'r')
+    dictionary = yaml.safe_load(stream)
+    return dictionary
 
 
-lyrics, language = get_lyrics(query, song_file)
+dictionary = load_config()
+out_sample_rate = int(dictionary['out_sample_rate'])
+song_file = dictionary['song_file']
+vocals_file = dictionary['vocals_file']
+whisper_size = dictionary['whisper_size']
 
-with open(lyrics_file, 'w') as file:
-    file.write(lyrics)
-
-options = dict(language=language, beam_size=10, best_of=10)
-transcribe_options = dict(task="transcribe", **options)
-
-transcription = model.transcribe(song_file, **transcribe_options)
-
-
-
-pd.options.display.max_rows = 100
-pd.options.display.max_colwidth = 1000
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+clip_director = ClipDirector(device=DEVICE, whisper_size=whisper_size, whisper_beam_size=10, fps=20)
 
+lyrics, language = clip_director.get_song_and_lyrics(args.query, song_file, args.ya_music_token, args.genius_token)
+clip_director.separae_vocals(song_file=song_file, out_file=vocals_file, out_sample_rate=out_sample_rate)
 
-
-ans = align_segments(lyrics_file, transcription_pickle_file)
-for i in range(len(ans)):
-    print(ans[i]["text"], ans[i]["start"], ans[i]["end"])
+segments = clip_director.generate_alignment(song_file=vocals_file, lyrics_str=lyrics, language=language)
+prompts = []
+for i in segments:
+    prompts.append(i[0])
+all_images = clip_director.generate_images(prompts=prompts)
