@@ -3,4 +3,18 @@ out_sample_rate: 16000
 song_file: song.mp3
 vocals_file: vocal.mp3
 whisper_size: medium
+image_height: 512
+image_width: 512
+fps: 20
+kandinsky_images_steps: 75
+kandinsky_flow_steps: 100
+kandinsky_denoised_type: dynamic_threshold
+kandinsky_dynamic_threshold_v: 99.5
+kandinsky_sampler: ddim_sampler
+kandinsky_ddim_eta: 0.05
+kandinsky_guidance_scale: 7
+kandinsky_strength: 0.9
+kandinsky_progress: True
+kandinsky_prompt_perturbation: 0.25
+with_img2img_transition: True
 ...
