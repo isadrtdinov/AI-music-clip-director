@@ -23,6 +23,7 @@ dictionary = load_config(config_file=args.config)
 out_sample_rate = int(dictionary['out_sample_rate'])
 song_file = dictionary['song_file']
 vocals_file = dictionary['vocals_file']
+video_file = dictionary['video_file']
 whisper_size = dictionary['whisper_size']
 image_height = int(dictionary['image_height'])
 image_width = int(dictionary['image_width'])
@@ -36,9 +37,8 @@ kandinsky_ddim_eta = float(dictionary['kandinsky_ddim_eta'])
 kandinsky_guidance_scale = float(dictionary['kandinsky_guidance_scale'])
 kandinsky_strength = float(dictionary['kandinsky_strength'])
 kandinsky_progress = bool(dictionary['kandinsky_progress'])
-kandinsky_prompt_perturbation = float(dictionary['prompt_perturbation'])
+kandinsky_prompt_perturbation = float(dictionary['kandinsky_prompt_perturbation'])
 with_img2img_transition = bool(dictionary['with_img2img_transition'])
-style = dictionary['style']
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_director = ClipDirector(device=device, whisper_size=whisper_size, whisper_beam_size=10, fps=fps,
@@ -49,7 +49,7 @@ clip_director = ClipDirector(device=device, whisper_size=whisper_size, whisper_b
                              kandinsky_dynamic_threshold_v=kandinsky_dynamic_threshold_v,
                              kandinsky_sampler=kandinsky_sampler, kandinsky_ddim_eta=kandinsky_ddim_eta,
                              kandinsky_guidance_scale=kandinsky_guidance_scale, kandinsky_strength=kandinsky_strength,
-                             prompt_perturbation=kandinsky_prompt_perturbation, style=style)
+                             prompt_perturbation=kandinsky_prompt_perturbation, style=args.style)
 
 lyrics, title, artist, duration, language = clip_director.get_song_and_lyrics(
     args.query, song_file, args.ya_music_token, args.genius_token
@@ -66,4 +66,4 @@ for i in segments:
     prompts.append(i[0])
     times.append(i[1])
 all_images = clip_director.generate_images(prompts=prompts, times=times, title=title, artist=artist, duration=duration)
-video_file = clip_director.create_video_clip(images_with_texts=all_images, song_file=song_file)
+clip_director.create_video_clip(images_with_texts=all_images, song_file=song_file, video_file=video_file)

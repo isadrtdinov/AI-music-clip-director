@@ -39,7 +39,7 @@ def align_segments(transcription: dict, lyrics: str):
     best = []
     from fuzzywuzzy import fuzz
     for i in range(len(segments)):
-        print(i, len(segments))
+        # print(i, len(segments))
         best_distance = 0
         bestl = 0
         bestr = 0
