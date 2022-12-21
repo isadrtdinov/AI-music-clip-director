@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from moviepy.editor import AudioFileClip, VideoFileClip, CompositeAudioClip
 import whisper
 from kandinsky2 import get_kandinsky2
@@ -52,16 +51,18 @@ class ClipDirector(object):
     def generate_images(self, prompts: list, times: list, title: str = "", artist: str = "", duration: float = 0):
         prompts = [title + " " + artist] + prompts + [title + " " + artist]
         times = [[0, times[0][0]]] + times + [[times[-1][1], duration]]
-        for i in range(len(prompts)):
-            prompts[i] = prompts[i] + " " + self.style
         pil_imgs = []
         for prompt in prompts:
-            pil_img = self.kandinsky.generate_text2img(self.remove_multiple_spaces(self.remove_punctuation(prompt.lower())), batch_size=1, h=self.image_height, w=self.image_width,
-                                                       num_steps=self.kandinsky_images_steps,
-                                                       denoised_type=self.kandinsky_denoised_type,
-                                                       dynamic_threshold_v=self.kandinsky_dynamic_threshold_v,
-                                                       sampler=self.kandinsky_sampler, ddim_eta=self.kandinsky_ddim_eta,
-                                                       guidance_scale=self.kandinsky_guidance_scale)
+            style_prompt = prompt + " " + self.style
+            pil_img = self.kandinsky.generate_text2img(
+                self.remove_multiple_spaces(self.remove_punctuation(style_prompt.lower())),
+                batch_size=1, h=self.image_height, w=self.image_width,
+                num_steps=self.kandinsky_images_steps,
+                denoised_type=self.kandinsky_denoised_type,
+                dynamic_threshold_v=self.kandinsky_dynamic_threshold_v,
+                sampler=self.kandinsky_sampler, ddim_eta=self.kandinsky_ddim_eta,
+                guidance_scale=self.kandinsky_guidance_scale
+            )
             pil_imgs.append(pil_img[0])
         scenario = []
         texts = []
@@ -120,23 +121,24 @@ class ClipDirector(object):
 
         return ans
 
-    def generate_alignment(self, song_file: str, lyrics_str: str, language: str):
+    def generate_alignment(self, song_file: str, lyrics_str: str, language: str, duration: float):
         options = dict(language=language, beam_size=self.whisper_beam_size,
                        best_of=self.whisper_beam_size)
         transcribe_options = dict(task="transcribe", **options)
         transcription = self.whisper.transcribe(song_file, **transcribe_options)
-        return align_segments(transcription, lyrics_str)
+        return align_segments(transcription, lyrics_str, duration)
 
     def get_song_and_lyrics(self, query: str, song_file: str, ya_music_token: str, genius_token: str):
         lyrics, language = get_lyrics(query, song_file, ya_music_token, genius_token)
         return lyrics, language
 
-    def separate_vocals(self, song_file: str, out_file: str, out_sample_rate: int):
-        separate_vocals(song_file=song_file, out_file=out_file, out_sample_rate=out_sample_rate)
+    def separate_vocals(self, song_file: str, out_file: str, whisper_sample_rate: int):
+        separate_vocals(song_file=song_file, out_file=out_file,
+                        whisper_sample_rate=whisper_sample_rate)
 
     def add_caption_2_image(self, img, caption):
         MAX_W, MAX_H = self.image_width, self.image_height
-        l = int(0.04 * MAX_W)
+        l = int(0.08 * MAX_W)
         p = textwrap.wrap(caption, width=int(self.image_width // (l * 0.65)))
 
         draw = ImageDraw.Draw(img)
@@ -145,7 +147,8 @@ class ClipDirector(object):
         current_h, pad = int(0.7 * MAX_H), int(0.02 * MAX_H)
         for line in p:
             w, h = draw.textsize(line, font=font)
-            draw.text(((MAX_W - w) // 2, current_h), line, fill='white', font=font, stroke_width=2, stroke_fill='black')
+            draw.text(((MAX_W - w) // 2, current_h), line, fill='white', font=font,
+                      stroke_width=2, stroke_fill='black')
             current_h += h + pad
         return img
 
@@ -174,4 +177,3 @@ class ClipDirector(object):
         new_audioclip = CompositeAudioClip([audioclip])
         videoclip.audio = new_audioclip
         videoclip.write_videofile(name_video_to_add)
-

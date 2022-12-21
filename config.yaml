@@ -3,6 +3,7 @@ song_file: song.mp3
 vocals_file: vocal.wav
 video_file: video.mp4
 whisper_size: medium
+whisper_sample_rate: 16000
 image_height: 512
 image_width: 512
 fps: 20

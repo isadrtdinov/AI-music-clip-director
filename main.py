@@ -24,6 +24,7 @@ song_file = dictionary['song_file']
 vocals_file = dictionary['vocals_file']
 video_file = dictionary['video_file']
 whisper_size = dictionary['whisper_size']
+whisper_sample_rate = dictionary['whisper_sample_rate']
 image_height = int(dictionary['image_height'])
 image_width = int(dictionary['image_width'])
 fps = int(dictionary['fps'])
@@ -54,11 +55,13 @@ lyrics, title, artist, duration, language = clip_director.get_song_and_lyrics(
     args.query, song_file, args.ya_music_token, args.genius_token
 )
 if language == "Russian":
-    clip_director.separate_vocals(song_file=song_file, out_file=vocals_file)
+    clip_director.separate_vocals(song_file=song_file, out_file=vocals_file,
+                                  whisper_sample_rate=whisper_sample_rate)
 else:
     vocals_file = song_file
 
-segments = clip_director.generate_alignment(song_file=vocals_file, lyrics_str=lyrics, language=language)
+segments = clip_director.generate_alignment(song_file=vocals_file, lyrics_str=lyrics,
+                                            language=language, duration=duration)
 prompts = []
 times = []
 for i in segments:

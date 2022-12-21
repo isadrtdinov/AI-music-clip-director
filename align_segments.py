@@ -1,8 +1,7 @@
 from fuzzywuzzy import fuzz
 
 
-def align_segments(transcription: dict, lyrics: str):
-
+def align_segments(transcription: dict, lyrics: str, duration: float):
     segments = []
     times = []
     for segment in transcription['segments']:
@@ -115,4 +114,6 @@ def align_segments(transcription: dict, lyrics: str):
         else:
             q.append([song_strings[i], [superitog[i][0], superitog[i][1]]])
 
+    if q:
+        q[-1][1][1] = min(q[-1][1][1], duration)
     return q
