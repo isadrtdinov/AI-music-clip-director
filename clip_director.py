@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from moviepy.editor import *
+from moviepy.editor import AudioFileClip, VideoFileClip, CompositeAudioClip
 import whisper
 from kandinsky2 import get_kandinsky2
 from align_segments import align_segments
@@ -8,7 +8,6 @@ from separate_vocals import separate_vocals
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import cv2
-import os
 import numpy as np
 import string
 import re
@@ -44,13 +43,11 @@ class ClipDirector(object):
         self.kandinsky = get_kandinsky2(device, task_type='text2img')
         self.whisper = whisper.load_model(whisper_size)
 
-
     def remove_punctuation(self, text):
         return "".join([ch if ch not in string.punctuation else ' ' for ch in text])
 
     def remove_multiple_spaces(self, text):
         return re.sub(r'\s+', ' ', text, flags=re.I)
-
 
     def generate_images(self, prompts: list, times: list, title: str = "", artist: str = "", duration: float = 0):
         prompts = [title + " " + artist] + prompts + [title + " " + artist]
@@ -151,6 +148,7 @@ class ClipDirector(object):
             draw.text(((MAX_W - w) // 2, current_h), line, fill='white', font=font, stroke_width=2, stroke_fill='black')
             current_h += h + pad
         return img
+
     def create_video_clip(self, images_with_texts, song_file, video_file):
         all_images = []
         for i in range(len(images_with_texts)):
