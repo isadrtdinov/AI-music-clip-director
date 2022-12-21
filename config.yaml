@@ -17,4 +17,5 @@ kandinsky_strength: 0.9
 kandinsky_progress: True
 kandinsky_prompt_perturbation: 0.25
 with_img2img_transition: True
+style: Van Gogh
 ...

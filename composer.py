@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from moviepy.editor import *
 import whisper
 from kandinsky2 import get_kandinsky2
 from align_segments import align_segments
@@ -18,7 +20,7 @@ class ClipDirector(object):
                  kandinsky_denoised_type: str = "dynamic_threshold", kandinsky_dynamic_threshold_v: float = 99.5,
                  kandinsky_sampler: str = "kandinsky_sampler", kandinsky_ddim_eta: float = 0.05,
                  kandinsky_guidance_scale: float = 7, kandinsky_strength: float = 0.9, kandinsky_progress: bool = True,
-                 prompt_perturbation: float = 0.25):
+                 prompt_perturbation: float = 0.25, style: str = ""):
         self.whisper_size = whisper_size
         self.whisper_beam_size = whisper_beam_size
         self.fps = fps
@@ -35,11 +37,16 @@ class ClipDirector(object):
         self.kandinsky_strength = kandinsky_strength
         self.kandinsky_progress = kandinsky_progress
         self.prompt_perturbation = prompt_perturbation
+        self.style = style
 
         self.kandinsky = get_kandinsky2(device, task_type='text2img')
         self.whisper = whisper.load_model(whisper_size)
 
-    def generate_images(self, prompts: list, times: list):
+    def generate_images(self, prompts: list, times: list, title: str = "", artist: str = "", duration: float = 0):
+        prompts = [title + " " + artist] + prompts + [title + " " + artist]
+        times = [[0, times[0][0]]] + times + [[times[-1][1], duration]]
+        for i in range(len(prompts)):
+            prompts[i] = prompts[i] + " " + self.style
         pil_imgs = []
         for prompt in prompts:
             pil_img = self.kandinsky.generate_text2img(prompt, batch_size=1, h=self.image_height, w=self.image_width,
@@ -52,28 +59,42 @@ class ClipDirector(object):
         scenario = []
         texts = []
         if self.with_img2img_transition:
-            last = 0
-            s = 0
+            frames = []
+            for i in range(len(times)):
+                frames.append((times[i][0] * self.fps + times[i][1] * self.fps) // 2)
+            x_average = 0
+            for i in range(len(times)):
+                x_average += (times[i][1] - times[i][0]) * self.fps
+            x_average /= len(times)
+            x_average /= 2
+            x_average = round(x_average)
+            y = 0
             for i in range(len(prompts)):
-                s += len(prompts[i])
-            s /= len(prompts)
-            s /= 2
-
-            for i in range(len(prompts)):
+                while len(texts) < self.fps * times[i][0]:
+                    texts.append("")
                 peaks = []
-
+                if i > 0:
+                    x = frames[i]
+                    if 2 * x_average > x - y:
+                        peaks = [(x + y) // 2]
+                    else:
+                        length = x_average
+                        w = y + length
+                        while w < x:
+                            peaks.append(w)
+                            w += length
                 scenario += [{
-                    'frame': int(last + self.fps * times[i] / 2), 'image': pil_imgs[i], 'prompt': prompts[i],
-                    'perturbation_peaks': [int(last + self.fps * times[i] / 2)],
+                    'frame': frames[i], 'image': pil_imgs[i], 'prompt': prompts[i],
+                    'perturbation_peaks': peaks,
                     'prompt_perturbation': self.prompt_perturbation,
                 }]
-                for j in range(self.fps * times[i]):
+                while len(texts) < self.fps * times[i][1]:
                     texts.append(prompts[i])
-                last += int(self.fps * times[i])
+                y = frames[i]
         else:
             for i in range(len(prompts)):
                 last = 0
-                while last <= self.fps * times[i]:
+                while last <= self.fps * (times[i][1] - times[i][0]):
                     scenario.append((pil_imgs[i], prompts[i]))
                     last += 1
             return scenario
@@ -120,7 +141,7 @@ class ClipDirector(object):
             draw.text(((MAX_W - w) // 2, current_h), line, fill='white', font=font, stroke_width=2, stroke_fill='black')
             current_h += h + pad
         return img
-    def create_video_clip(self, images_with_texts):
+    def create_video_clip(self, images_with_texts, song_file):
         all_images = []
         for i in range(len(images_with_texts)):
             all_images.append(self.add_caption_2_image(images_with_texts[i][0], images_with_texts[i][1]))
@@ -135,3 +156,15 @@ class ClipDirector(object):
 
         cv2.destroyAllWindows()
         video.release()
+        self.make_clip(name_audio=song_file, name_video_to_add='video.mp4')
+        return 'vide0.mp4'
+
+    def make_clip(self, name_audio, name_video_to_add):
+
+        videoclip = VideoFileClip(name_video_to_add)
+        audioclip = AudioFileClip(name_audio)
+
+        new_audioclip = CompositeAudioClip([audioclip])
+        videoclip.audio = new_audioclip
+        videoclip.write_videofile(name_video_to_add)
+

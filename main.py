@@ -57,6 +57,7 @@ kandinsky_strength = float(dictionary['kandinsky_strength'])
 kandinsky_progress = bool(dictionary['kandinsky_progress'])
 kandinsky_prompt_perturbation = float(dictionary['prompt_perturbation'])
 with_img2img_transition = bool(dictionary['with_img2img_transition'])
+style = dictionary['style']
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 clip_director = ClipDirector(device=DEVICE, whisper_size=whisper_size, whisper_beam_size=10, fps=fps,
@@ -67,10 +68,13 @@ clip_director = ClipDirector(device=DEVICE, whisper_size=whisper_size, whisper_b
                              kandinsky_dynamic_threshold_v=kandinsky_dynamic_threshold_v,
                              kandinsky_sampler=kandinsky_sampler, kandinsky_ddim_eta=kandinsky_ddim_eta,
                              kandinsky_guidance_scale=kandinsky_guidance_scale, kandinsky_strength=kandinsky_strength,
-                             prompt_perturbation=kandinsky_prompt_perturbation)
+                             prompt_perturbation=kandinsky_prompt_perturbation, style=style)
 
-lyrics, language = clip_director.get_song_and_lyrics(args.query, song_file, args.ya_music_token, args.genius_token)
-clip_director.separate_vocals(song_file=song_file, out_file=vocals_file, out_sample_rate=out_sample_rate)
+lyrics, title, artist, duration, language = clip_director.get_song_and_lyrics(args.query, song_file, args.ya_music_token, args.genius_token)
+if language == "Russian":
+    clip_director.separate_vocals(song_file=song_file, out_file=vocals_file, out_sample_rate=out_sample_rate)
+else:
+    vocals_file = song_file
 
 segments = clip_director.generate_alignment(song_file=vocals_file, lyrics_str=lyrics, language=language)
 prompts = []
@@ -78,4 +82,6 @@ times = []
 for i in segments:
     prompts.append(i[0])
     times.append(i[1])
-all_images = clip_director.generate_images(prompts=prompts, times=times)
+all_images = clip_director.generate_images(prompts=prompts, times=times, title=title, artist=artist, duration=duration)
+video_file = clip_director.create_video_clip(images_with_texts=all_images, song_file=song_file
+

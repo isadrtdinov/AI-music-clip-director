@@ -26,7 +26,7 @@ def get_lyrics_from_genius(query, genius_token):
             lyrics = lyrics[:-5]
         while lyrics[-1].isdigit() or lyrics[-2].isdigit():
             lyrics = lyrics[:-1]
-        return lyrics
+        return lyrics, song.artist
     else:
         raise Exception("LyricsNotFoundException")
 
@@ -37,13 +37,21 @@ def get_lyrics(query, song_file, ya_music_token, genius_token):
 
     track = search_result.best['result']
     if type(track) == Track:
+        duration = track.duration_ms * 0.001
+        title = track['title']
         track.download(song_file)
 
         if track.lyrics_available:
             supp = track.get_supplement()
             lyrics = supp['lyrics']['full_lyrics']
+            if len(track['artists']) == 0:
+                artist = ""
+            else:
+                artist = track['artists'][0]['name']
+                for w in track['artists'][1:]:
+                    artist += ', ' + w['name']
         else:
-            lyrics = get_lyrics_from_genius(query, genius_token)
+            lyrics, artist = get_lyrics_from_genius(query, genius_token)
     else:
         raise Exception("TrackNotFoundException")
     cnteng = 0
@@ -54,8 +62,8 @@ def get_lyrics(query, song_file, ya_music_token, genius_token):
         elif ord(i.lower()) >= ord("а") and ord(i.lower()) <= ord("я"):
             cntru += 1
     if cnteng > cntru:
-        return lyrics, "English"
+        return lyrics, title, artist, duration, "English"
     else:
-        return lyrics, "Russian"
+        return lyrics, title, artist, duration, "Russian"
 
 
