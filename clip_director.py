@@ -71,7 +71,7 @@ class ClipDirector(object):
         if self.with_img2img_transition:
             frames = []
             for i in range(len(times)):
-                frames.append((times[i][0] * self.fps + times[i][1] * self.fps) // 2)
+                frames.append(int((times[i][0] * self.fps + times[i][1] * self.fps) / 2))
             x_average = 0
             for i in range(len(times)):
                 x_average += (times[i][1] - times[i][0]) * self.fps
@@ -151,7 +151,7 @@ class ClipDirector(object):
             draw.text(((MAX_W - w) // 2, current_h), line, fill='white', font=font, stroke_width=2, stroke_fill='black')
             current_h += h + pad
         return img
-    def create_video_clip(self, images_with_texts, song_file):
+    def create_video_clip(self, images_with_texts, song_file, video_file):
         all_images = []
         for i in range(len(images_with_texts)):
             all_images.append(self.add_caption_2_image(images_with_texts[i][0], images_with_texts[i][1]))
@@ -159,15 +159,14 @@ class ClipDirector(object):
         height, width, layers = cv2_images[0].shape
 
         fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-        video = cv2.VideoWriter('video.mp4', fourcc, self.fps, (height, width))
+        video = cv2.VideoWriter(video_file, fourcc, self.fps, (height, width))
 
         for image in cv2_images:
             video.write(image)
 
         cv2.destroyAllWindows()
         video.release()
-        self.make_clip(name_audio=song_file, name_video_to_add='video.mp4')
-        return 'vide0.mp4'
+        self.make_clip(name_audio=song_file, name_video_to_add=video_file)
 
     def make_clip(self, name_audio, name_video_to_add):
 
