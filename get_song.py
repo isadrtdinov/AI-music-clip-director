@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-
 from yandex_music import Client
 from yandex_music.track.track import Track
 from lyricsgenius import Genius
-
 
 
 def get_lyrics_from_genius(query, genius_token):
@@ -54,16 +51,14 @@ def get_lyrics(query, song_file, ya_music_token, genius_token):
             lyrics, artist = get_lyrics_from_genius(query, genius_token)
     else:
         raise Exception("TrackNotFoundException")
+
     cnteng = 0
     cntru = 0
     for i in lyrics:
-        if ord(i.lower()) >= ord("a") and ord(i.lower()) <= ord("z"):
+        if ord("a") <= ord(i.lower()) <= ord("z"):
             cnteng += 1
-        elif ord(i.lower()) >= ord("а") and ord(i.lower()) <= ord("я"):
+        elif ord("а") <= ord(i.lower()) <= ord("я"):
             cntru += 1
-    if cnteng > cntru:
-        return lyrics, title, artist, duration, "English"
-    else:
-        return lyrics, title, artist, duration, "Russian"
 
-
+    language = "English" if cnteng > cntru else "Russian"
+    return lyrics, title, artist, duration, language
