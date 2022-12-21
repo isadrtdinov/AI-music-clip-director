@@ -2,3 +2,11 @@ lyricsgenius~=3.0.1
 fuzzywuzzy~=0.18.0
 python-Levenshtein~=0.20.8
 yandex-music~=2.0.1
+librosa
+soundfile
+opencv-python
+scipy
+tqdm
+moviepy
+git+https://github.com/isadrtdinov/Kandinsky-2.0.git
+git+https://github.com/openai/whisper.git
