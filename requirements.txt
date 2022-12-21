@@ -2,6 +2,7 @@ lyricsgenius~=3.0.1
 fuzzywuzzy~=0.18.0
 python-Levenshtein~=0.20.8
 yandex-music~=2.0.1
+imageio==2.4.1
 librosa
 soundfile
 opencv-python
