@@ -19,26 +19,27 @@ def load_config(config_file):
     return dictionary
 
 
-dictionary = load_config(config_file=args.config)
-song_file = dictionary['song_file']
-vocals_file = dictionary['vocals_file']
-video_file = dictionary['video_file']
-whisper_size = dictionary['whisper_size']
-whisper_sample_rate = dictionary['whisper_sample_rate']
-image_height = int(dictionary['image_height'])
-image_width = int(dictionary['image_width'])
-fps = int(dictionary['fps'])
-kandinsky_images_steps = int(dictionary['kandinsky_images_steps'])
-kandinsky_flow_steps = int(dictionary['kandinsky_flow_steps'])
-kandinsky_denoised_type = dictionary['kandinsky_denoised_type']
-kandinsky_dynamic_threshold_v = float(dictionary['kandinsky_dynamic_threshold_v'])
-kandinsky_sampler = dictionary['kandinsky_sampler']
-kandinsky_ddim_eta = float(dictionary['kandinsky_ddim_eta'])
-kandinsky_guidance_scale = float(dictionary['kandinsky_guidance_scale'])
-kandinsky_strength = float(dictionary['kandinsky_strength'])
-kandinsky_progress = bool(dictionary['kandinsky_progress'])
-kandinsky_prompt_perturbation = float(dictionary['kandinsky_prompt_perturbation'])
-with_img2img_transition = bool(dictionary['with_img2img_transition'])
+config = load_config(config_file=args.config)
+song_file = config['song_file']
+vocals_file = config['vocals_file']
+video_file = config['video_file']
+whisper_size = config['whisper_size']
+whisper_sample_rate = config['whisper_sample_rate']
+image_height = int(config['image_height'])
+image_width = int(config['image_width'])
+fps = int(config['fps'])
+kandinsky_images_steps = int(config['kandinsky_images_steps'])
+kandinsky_flow_steps = int(config['kandinsky_flow_steps'])
+kandinsky_denoised_type = config['kandinsky_denoised_type']
+kandinsky_dynamic_threshold_v = float(config['kandinsky_dynamic_threshold_v'])
+kandinsky_sampler = config['kandinsky_sampler']
+kandinsky_ddim_eta = float(config['kandinsky_ddim_eta'])
+kandinsky_guidance_scale = float(config['kandinsky_guidance_scale'])
+kandinsky_strength = float(config['kandinsky_strength'])
+kandinsky_progress = bool(config['kandinsky_progress'])
+kandinsky_prompt_perturbation = float(config['kandinsky_prompt_perturbation'])
+with_img2img_transition = bool(config['with_img2img_transition'])
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_director = ClipDirector(device=device, whisper_size=whisper_size, whisper_beam_size=10, fps=fps,
@@ -62,10 +63,12 @@ else:
 
 segments = clip_director.generate_alignment(song_file=vocals_file, lyrics_str=lyrics,
                                             language=language, duration=duration)
-prompts = []
-times = []
-for i in segments:
-    prompts.append(i[0])
-    times.append(i[1])
-all_images = clip_director.generate_images(prompts=prompts, times=times, title=title, artist=artist, duration=duration)
-clip_director.create_video_clip(images_with_texts=all_images, song_file=song_file, video_file=video_file)
+prompts, times = zip(*segments)
+all_images = clip_director.generate_images(
+    prompts=prompts, times=times, title=title,
+    artist=artist, duration=duration
+)
+clip_director.create_video_clip(
+    images_with_texts=all_images, song_file=song_file,
+    video_file=video_file
+)

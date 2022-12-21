@@ -1,15 +1,18 @@
-from moviepy.editor import AudioFileClip, VideoFileClip, CompositeAudioClip
+import re
+import string
+import textwrap
 import whisper
+import numpy as np
+from copy import deepcopy
 from kandinsky2 import get_kandinsky2
 from align_segments import align_segments
 from get_song import get_lyrics
 from separate_vocals import separate_vocals
 from PIL import Image, ImageDraw, ImageFont
-import textwrap
-import cv2
-import numpy as np
-import string
-import re
+from moviepy.editor import (
+    AudioFileClip, CompositeAudioClip, ImageClip,
+    VideoFileClip, concatenate_videoclips,
+)
 
 
 class ClipDirector(object):
@@ -106,15 +109,13 @@ class ClipDirector(object):
                     scenario.append((pil_imgs[i], prompts[i]))
                     last += 1
             return scenario
-        all_images = self.kandinsky.generate_img2img_flow(scenario,
-                                                          strength=self.kandinsky_strength,
-                                                          num_steps=self.kandinsky_flow_steps,
-                                                          guidance_scale=self.kandinsky_guidance_scale,
-                                                          progress=self.kandinsky_progress,
-                                                          dynamic_threshold_v=self.kandinsky_dynamic_threshold_v,
-                                                          denoised_type=self.kandinsky_denoised_type,
-                                                          sampler=self.kandinsky_sampler,
-                                                          ddim_eta=self.kandinsky_ddim_eta)
+        all_images = self.kandinsky.generate_img2img_flow(
+            scenario,
+            strength=self.kandinsky_strength, num_steps=self.kandinsky_flow_steps,
+            guidance_scale=self.kandinsky_guidance_scale, progress=self.kandinsky_progress,
+            dynamic_threshold_v=self.kandinsky_dynamic_threshold_v, denoised_type=self.kandinsky_denoised_type,
+            sampler=self.kandinsky_sampler, ddim_eta=self.kandinsky_ddim_eta
+        )
         ans = []
         for i in range(len(texts)):
             ans.append((all_images[i], texts[i]))
@@ -136,7 +137,8 @@ class ClipDirector(object):
         separate_vocals(song_file=song_file, out_file=out_file,
                         whisper_sample_rate=whisper_sample_rate)
 
-    def add_caption_2_image(self, img, caption):
+    def add_caption_to_image(self, img, caption):
+        img = deepcopy(img)
         MAX_W, MAX_H = self.image_width, self.image_height
         l = int(0.08 * MAX_W)
         p = textwrap.wrap(caption, width=int(self.image_width // (l * 0.65)))
@@ -153,27 +155,16 @@ class ClipDirector(object):
         return img
 
     def create_video_clip(self, images_with_texts, song_file, video_file):
-        all_images = []
-        for i in range(len(images_with_texts)):
-            all_images.append(self.add_caption_2_image(images_with_texts[i][0], images_with_texts[i][1]))
-        cv2_images = [np.array(image)[..., ::-1].copy() for image in all_images]
-        height, width, layers = cv2_images[0].shape
+        clip = []
+        for image, text in images_with_texts:
+            clip.append(
+                ImageClip(
+                    np.array(self.add_caption_to_image(image, text))
+                ).set_duration(1 / self.fps)
+            )
 
-        fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-        video = cv2.VideoWriter(video_file, fourcc, self.fps, (height, width))
-
-        for image in cv2_images:
-            video.write(image)
-
-        cv2.destroyAllWindows()
-        video.release()
-        self.make_clip(name_audio=song_file, name_video_to_add=video_file)
-
-    def make_clip(self, name_audio, name_video_to_add):
-
-        videoclip = VideoFileClip(name_video_to_add)
-        audioclip = AudioFileClip(name_audio)
-
+        videoclip = concatenate_videoclips(clip, method='compose')
+        audioclip = AudioFileClip(song_file)
         new_audioclip = CompositeAudioClip([audioclip])
         videoclip.audio = new_audioclip
-        videoclip.write_videofile(name_video_to_add)
+        videoclip.write_videofile(video_file, fps=self.fps, audio_codec='aac')
