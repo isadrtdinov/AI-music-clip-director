@@ -1,5 +1,3 @@
-import codecs
-import pickle
 from fuzzywuzzy import fuzz
 
 
@@ -37,7 +35,6 @@ def align_segments(transcription: dict, lyrics: str):
 
     d = []
     best = []
-    from fuzzywuzzy import fuzz
     for i in range(len(segments)):
         # print(i, len(segments))
         best_distance = 0
@@ -59,7 +56,6 @@ def align_segments(transcription: dict, lyrics: str):
     # for i in range(len(best)):
     #     l, r = best[i]
     #     print(segments[i], '||||', strings[l:r+1])
-    mid = 0
     itog = []
     for i in range(len(segments)):
         itog.append(strings[best[i][0]:best[i][1] + 1])
@@ -113,6 +109,10 @@ def align_segments(transcription: dict, lyrics: str):
 
     q = []
     for i in range(len(superitog)):
-        q.append([song_strings[i], [superitog[i][0], superitog[i][1]]])
-    return q
+        if superitog[i][1] - superitog[i][0] <= 0.1 and q:
+            q[-1][0] += ' ' + song_strings[i]
+            q[-1][1][1] = superitog[i][1]
+        else:
+            q.append([song_strings[i], [superitog[i][0], superitog[i][1]]])
 
+    return q

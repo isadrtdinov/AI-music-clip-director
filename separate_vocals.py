@@ -3,7 +3,7 @@ import numpy as np
 import soundfile as sf
 
 
-def separate_vocals(song_file: str, out_file: str, out_sample_rate: int):
+def separate_vocals(song_file: str, out_file: str):
     """
     :param song_file:
     :param out_file:
@@ -45,4 +45,4 @@ def separate_vocals(song_file: str, out_file: str, out_sample_rate: int):
 
     S_foreground = mask_v * S_full
     new_waveform = librosa.istft(S_foreground * phase)
-    sf.write(out_file, new_waveform, out_sample_rate)
+    sf.write(out_file, new_waveform, sample_rate)

@@ -20,7 +20,6 @@ def load_config(config_file):
 
 
 dictionary = load_config(config_file=args.config)
-out_sample_rate = int(dictionary['out_sample_rate'])
 song_file = dictionary['song_file']
 vocals_file = dictionary['vocals_file']
 video_file = dictionary['video_file']
@@ -55,7 +54,7 @@ lyrics, title, artist, duration, language = clip_director.get_song_and_lyrics(
     args.query, song_file, args.ya_music_token, args.genius_token
 )
 if language == "Russian":
-    clip_director.separate_vocals(song_file=song_file, out_file=vocals_file, out_sample_rate=out_sample_rate)
+    clip_director.separate_vocals(song_file=song_file, out_file=vocals_file)
 else:
     vocals_file = song_file
 
