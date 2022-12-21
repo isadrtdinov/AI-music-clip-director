@@ -116,9 +116,3 @@ def align_segments(transcription: dict, lyrics: str):
         q.append([song_strings[i], [superitog[i][0], superitog[i][1]]])
     return q
 
-    w = []
-    last = 0
-    for i in range(len(superitog)):
-        w.append([song_strings[i], superitog[i][1] - last])
-        last = superitog[i][1]
-    return w

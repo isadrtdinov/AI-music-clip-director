@@ -10,6 +10,8 @@ import textwrap
 import cv2
 import os
 import numpy as np
+import string
+import re
 
 
 class ClipDirector(object):
@@ -42,6 +44,14 @@ class ClipDirector(object):
         self.kandinsky = get_kandinsky2(device, task_type='text2img')
         self.whisper = whisper.load_model(whisper_size)
 
+
+    def remove_punctuation(self, text):
+        return "".join([ch if ch not in string.punctuation else ' ' for ch in text])
+
+    def remove_multiple_spaces(self, text):
+        return re.sub(r'\s+', ' ', text, flags=re.I)
+
+
     def generate_images(self, prompts: list, times: list, title: str = "", artist: str = "", duration: float = 0):
         prompts = [title + " " + artist] + prompts + [title + " " + artist]
         times = [[0, times[0][0]]] + times + [[times[-1][1], duration]]
@@ -49,7 +59,7 @@ class ClipDirector(object):
             prompts[i] = prompts[i] + " " + self.style
         pil_imgs = []
         for prompt in prompts:
-            pil_img = self.kandinsky.generate_text2img(prompt, batch_size=1, h=self.image_height, w=self.image_width,
+            pil_img = self.kandinsky.generate_text2img(self.remove_multiple_spaces(self.remove_punctuation(prompt.lower())), batch_size=1, h=self.image_height, w=self.image_width,
                                                        num_steps=self.kandinsky_images_steps,
                                                        denoised_type=self.kandinsky_denoised_type,
                                                        dynamic_threshold_v=self.kandinsky_dynamic_threshold_v,

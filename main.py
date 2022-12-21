@@ -23,10 +23,7 @@ except ImportError:
 import torch
 import pandas as pd
 import urllib
-import tarfile
 import whisper
-import torchaudio
-
 from scipy.io import wavfile
 from tqdm.notebook import tqdm
 import yaml
