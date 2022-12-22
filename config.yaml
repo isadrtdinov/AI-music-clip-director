@@ -4,6 +4,8 @@ vocals_file: vocal.wav
 video_file: video.mp4
 cache_dir: cached_images
 cached_lyrics: cached_images/lyrics.txt
+font_file: arial.ttf
+font_link: https://github.com/gasharper/linux-fonts/raw/master/arial.ttf
 whisper_size: medium
 whisper_sample_rate: 16000
 image_height: 512

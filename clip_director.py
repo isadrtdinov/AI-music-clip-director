@@ -23,7 +23,7 @@ class ClipDirector(object):
                  kandinsky_denoised_type: str = "dynamic_threshold", kandinsky_dynamic_threshold_v: float = 99.5,
                  kandinsky_sampler: str = "kandinsky_sampler", kandinsky_ddim_eta: float = 0.05,
                  kandinsky_guidance_scale: float = 7, kandinsky_strength: float = 0.9, kandinsky_progress: bool = True,
-                 prompt_perturbation: float = 0.25, style: str = ""):
+                 prompt_perturbation: float = 0.25, style: str = "", font_path='arial.ttf'):
         self.whisper_size = whisper_size
         self.whisper_beam_size = whisper_beam_size
         self.fps = fps
@@ -41,6 +41,7 @@ class ClipDirector(object):
         self.kandinsky_progress = kandinsky_progress
         self.prompt_perturbation = prompt_perturbation
         self.style = style
+        self.font_path = font_path
 
         self.kandinsky = get_kandinsky2(device, task_type='text2img')
         self.whisper = whisper.load_model(whisper_size)
@@ -144,7 +145,7 @@ class ClipDirector(object):
         p = textwrap.wrap(caption, width=int(self.image_width // (l * 0.65)))
 
         draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype('arial.ttf', l)
+        font = ImageFont.truetype(self.font_path, l)
 
         current_h, pad = int(0.7 * MAX_H), int(0.02 * MAX_H)
         for line in p:
