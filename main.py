@@ -86,7 +86,7 @@ for i, (image, text) in enumerate(images_with_text):
     filename = f'{i:05d}.jpg'
     path = os.path.join(cache_dir, filename)
     image.convert('RGB').save(path)
-    lyrics_desc = filename + '\t' + text + '\n'
+    lyrics_desc += filename + '\t' + text + '\n'
 
 with open(cached_lyrics, 'w') as file:
     file.write(lyrics_desc)

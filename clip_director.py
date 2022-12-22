@@ -117,10 +117,7 @@ class ClipDirector(object):
             dynamic_threshold_v=self.kandinsky_dynamic_threshold_v, denoised_type=self.kandinsky_denoised_type,
             sampler=self.kandinsky_sampler, ddim_eta=self.kandinsky_ddim_eta
         )
-        ans = []
-        for i in range(len(texts)):
-            ans.append((all_images[i], texts[i]))
-
+        ans = list(zip(all_images, texts))
         return ans
 
     def generate_alignment(self, song_file: str, lyrics_str: str, language: str, duration: float):
@@ -131,8 +128,8 @@ class ClipDirector(object):
         return align_segments(transcription, lyrics_str, duration)
 
     def get_song_and_lyrics(self, query: str, song_file: str, ya_music_token: str, genius_token: str):
-        lyrics, language = get_lyrics(query, song_file, ya_music_token, genius_token)
-        return lyrics, language
+        lyrics, duration, language = get_lyrics(query, song_file, ya_music_token, genius_token)
+        return lyrics, duration, language
 
     def separate_vocals(self, song_file: str, out_file: str, whisper_sample_rate: int):
         separate_vocals(song_file=song_file, out_file=out_file,
