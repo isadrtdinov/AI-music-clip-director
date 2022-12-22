@@ -51,8 +51,8 @@ class ClipDirector(object):
     def remove_multiple_spaces(self, text):
         return re.sub(r'\s+', ' ', text, flags=re.I)
 
-    def generate_images(self, prompts: list, times: list, title: str = "", artist: str = "", duration: float = 0):
-        prompts = [title + " " + artist] + prompts + [title + " " + artist]
+    def generate_images(self, prompts: list, times: list, duration: float = 0):
+        prompts = [prompts[0]] + prompts + [prompts[-1]]
         times = [[0, times[0][0]]] + times + [[times[-1][1], duration]]
         pil_imgs = []
         for prompt in prompts:
@@ -140,7 +140,7 @@ class ClipDirector(object):
     def add_caption_to_image(self, img, caption):
         img = deepcopy(img)
         MAX_W, MAX_H = self.image_width, self.image_height
-        l = int(0.08 * MAX_W)
+        l = int(0.06 * MAX_W)
         p = textwrap.wrap(caption, width=int(self.image_width // (l * 0.65)))
 
         draw = ImageDraw.Draw(img)
