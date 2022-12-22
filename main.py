@@ -27,6 +27,8 @@ vocals_file = config['vocals_file']
 video_file = config['video_file']
 cache_dir = config['cache_dir']
 cached_lyrics = config['cached_lyrics']
+font_file = config['font_file']
+font_link = config['font_link']
 whisper_size = config['whisper_size']
 whisper_sample_rate = config['whisper_sample_rate']
 image_height = int(config['image_height'])
@@ -44,6 +46,9 @@ kandinsky_progress = bool(config['kandinsky_progress'])
 kandinsky_prompt_perturbation = float(config['kandinsky_prompt_perturbation'])
 with_img2img_transition = bool(config['with_img2img_transition'])
 
+if not os.path.isfile(font_file):
+    os.system(f'wget {font_link} -O {font_file}')
+font_path = os.path.abspath(font_file)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_director = ClipDirector(device=device, whisper_size=whisper_size, whisper_beam_size=10, fps=fps,
@@ -54,7 +59,7 @@ clip_director = ClipDirector(device=device, whisper_size=whisper_size, whisper_b
                              kandinsky_dynamic_threshold_v=kandinsky_dynamic_threshold_v,
                              kandinsky_sampler=kandinsky_sampler, kandinsky_ddim_eta=kandinsky_ddim_eta,
                              kandinsky_guidance_scale=kandinsky_guidance_scale, kandinsky_strength=kandinsky_strength,
-                             prompt_perturbation=kandinsky_prompt_perturbation, style=args.style)
+                             prompt_perturbation=kandinsky_prompt_perturbation, style=args.style, font_path=font_path)
 
 lyrics, duration, language = clip_director.get_song_and_lyrics(
     args.query, song_file, args.ya_music_token, args.genius_token
