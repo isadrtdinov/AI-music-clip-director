@@ -1,3 +1,5 @@
+import os
+import shutil
 import yaml
 import torch
 import argparse
@@ -15,14 +17,16 @@ args = parser.parse_args()
 
 def load_config(config_file):
     stream = open(config_file, 'r')
-    dictionary = yaml.safe_load(stream)
-    return dictionary
+    config = yaml.safe_load(stream)
+    return config
 
 
 config = load_config(config_file=args.config)
 song_file = config['song_file']
 vocals_file = config['vocals_file']
 video_file = config['video_file']
+cache_dir = config['cache_dir']
+cached_lyrics = config['cached_lyrics']
 whisper_size = config['whisper_size']
 whisper_sample_rate = config['whisper_sample_rate']
 image_height = int(config['image_height'])
@@ -52,7 +56,7 @@ clip_director = ClipDirector(device=device, whisper_size=whisper_size, whisper_b
                              kandinsky_guidance_scale=kandinsky_guidance_scale, kandinsky_strength=kandinsky_strength,
                              prompt_perturbation=kandinsky_prompt_perturbation, style=args.style)
 
-lyrics, title, artist, duration, language = clip_director.get_song_and_lyrics(
+lyrics, duration, language = clip_director.get_song_and_lyrics(
     args.query, song_file, args.ya_music_token, args.genius_token
 )
 if language == "Russian":
@@ -64,11 +68,28 @@ else:
 segments = clip_director.generate_alignment(song_file=vocals_file, lyrics_str=lyrics,
                                             language=language, duration=duration)
 prompts, times = zip(*segments)
-all_images = clip_director.generate_images(
-    prompts=prompts, times=times, title=title,
-    artist=artist, duration=duration
+images_with_text = clip_director.generate_images(
+    prompts=list(prompts), times=list(times), duration=duration
 )
+
+if os.path.isdir(cache_dir):
+    shutil.rmtree(cache_dir)
+
+os.makedirs(cache_dir)
+lyrics_desc = ''
+for i, (image, text) in enumerate(images_with_text):
+    filename = f'{i:05d}.jpg'
+    path = os.path.join(cache_dir, filename)
+    image.convert('RGB').save(path)
+    lyrics_desc = filename + '\t' + text + '\n'
+
+with open(cached_lyrics, 'w') as file:
+    file.write(lyrics_desc)
+
+shutil.make_archive(cache_dir, 'zip', cache_dir)
+shutil.rmtree(cache_dir)
+
 clip_director.create_video_clip(
-    images_with_texts=all_images, song_file=song_file,
+    images_with_texts=images_with_text, song_file=song_file,
     video_file=video_file
 )
